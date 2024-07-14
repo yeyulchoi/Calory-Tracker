@@ -20,15 +20,42 @@ class CalorieTracker{
     addMeal(meal){
         this._meals.push(meal)
         this._totalCalories +=meal.calories;
+        this._displayNewMeal(meal);
         this._render();
     }
     addWorkout(workout){
         this._workouts.push(workout)
         this._totalCalories -=workout.calories;
-        this._displayCaloriesTotal();
+        this._displayNewWorkout(workout);
         this._render();
 
     }
+
+// remove meals
+    removeMeal(id){
+        const index = this._meals.findIndex((meal)=>meal.id===id);
+        
+        if(index !== -1){
+            const meal = this._meals[index];
+            this._totalCalories -=meal.calories;
+            this._meals.splice(index,1);
+            this._render();
+        }
+        
+    }
+    // remove workout
+    removeWorkout(id){
+        const index = this._workouts.findIndex((workout)=>workout.id===id);
+        
+        if(index !== -1){
+            const workout = this._workouts[index];
+            this._totalCalories -=workout.calories;
+            this._workouts.splice(index,1);
+            this._render();
+        }
+        
+    }
+
 
     //private method
 
@@ -76,6 +103,54 @@ class CalorieTracker{
         progressEl.style.width=`${width}%`;
     }
 
+    _displayNewMeal(meal){
+        const mealsEl= document.getElementById('meal-items');
+        const mealEl= document.createElement('div')
+        mealEl.classList.add('card','my-2')
+        mealEl.setAttribute('data-id',meal.id) //setattribute is set to delete item later. also, the id attribute should be set 'data-x' by convention.
+        mealEl.innerHTML =`
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                  <h4 class="mx-1">${meal.name}</h4>
+                  <div
+                    class="fs-1 bg-primary text-white text-center rounded-2 px-2 px-sm-5"
+                  >
+                  ${meal.calories}
+                  </div>
+                  <button class="delete btn btn-danger btn-sm mx-2">
+                    <i class="fa-solid fa-xmark"></i>
+                  </button>
+                </div>                
+              </div>
+        `
+        mealsEl.appendChild(mealEl)
+
+    }
+    _displayNewWorkout(workout){
+        const workoutsEl= document.getElementById('workout-items');
+        const workoutEl= document.createElement('div')
+        workoutEl.classList.add('card','my-3')
+        workoutEl.setAttribute('data-id',workout.id) //setattribute is set to delete item later. also, the id attribute should be set 'data-x' by convention.
+        workoutEl.innerHTML =`
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                  <h4 class="mx-1">${workout.name}</h4>
+                  <div
+                    class="fs-1 bg-secondary text-white text-center rounded-2 px-2 px-sm-5"
+                  >
+                  ${workout.calories}
+                  </div>
+                  <button class="delete btn btn-danger btn-sm mx-2">
+                    <i class="fa-solid fa-xmark"></i>
+                  </button>
+                </div>
+              </div>
+        `
+        workoutsEl.appendChild(workoutEl)
+
+    }
+
+
     _render(){
         this._displayCaloriesTotal();
         this._displayCaloriesConsumed();
@@ -103,12 +178,7 @@ class Workout{
 }
 
 
-const m = new Meal('breakfast',100)
-const w= new Workout('running',10)
 
-const ct =new CalorieTracker()
-ct.addMeal(m)
-ct.addWorkout(w)
 
 class App{
     constructor(){
@@ -116,10 +186,15 @@ class App{
 
         document.getElementById('meal-form').addEventListener('submit',this._newItem.bind(this,'meal'))
         document.getElementById('workout-form').addEventListener('submit',this._newItem.bind(this,'workout'))
-
+        document.getElementById('meal-items').addEventListener('click',this._deleteItem.bind(this,'meal'));
+        document.getElementById('workout-items').addEventListener('click',this._deleteItem.bind(this,'workout'));
         
 
     }
+
+
+
+
     _newItem(type,e){
         e.preventDefault();
         const name = document.getElementById(`${type}-name`);
@@ -149,32 +224,22 @@ class App{
         const collapseItem = document.getElementById(`collapse-${type}`);
         const bsCollapse = new bootstrap.Collapse(collapseItem,{
             toggle:true
-        })
+        })       
     }
 
-    // _newWorkout(e){
-    //     e.preventDefault();
-    //     const name = document.getElementById('workout-name');
-    //     const calories = document.getElementById('workout-calories');
+    _deleteItem(type,e){
+        if(e.target.classList.contains('delete') || e.target.classList.contains('fa-xmark') ){
+            if(confirm('are you sure?')){
+                const id = e.target.closest('.card').getAttribute('data-id');
+                console.log(id);
 
-    //     //validate inputs
+                type==='meal'? this._tracker.removeMeal(id):this._tracker.removeWorkout(id);
 
-    //     if(name.value==="" || calories===""){
-    //         alert('Please fill in the blank.');
-    //         return;
-    //     }
-
-    //     const workout= new Workout(name.value, +calories.value);
-    //     this._tracker.addWorkout(workout);
-        
-    //     name.value="";
-    //     calories.value="";
-
-    //     const collapseWorkout = document.getElementById('collapse-workout');
-    //     const bsCollapse = new bootstrap.Collapse(collapseWorkout,{
-    //         toggle:true
-    //     })
-    // }
+                e.target.closest('.card').remove();
+            }
+        }
+       
+    }
 }
 
  const app= new App();
